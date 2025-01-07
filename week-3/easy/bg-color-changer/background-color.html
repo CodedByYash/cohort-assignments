@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Background color changer</title>
+  </head>
+  <body>
+    <style>
+      .body {
+        background-color: white;
+      }
+      .box {
+        border: 1px solid black;
+        padding: 20px;
+        margin: 150px;
+        overflow: hidden;
+        margin-top: 300px;
+        border-radius: 5px;
+      }
+      .title {
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+        font-size: large;
+      }
+      .container {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+      }
+      .color {
+        border: 1px solid black;
+        padding: 10px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: large;
+      }
+      .red {
+        background-color: red;
+      }
+      .green {
+        background-color: green;
+      }
+      .blue {
+        background-color: blue;
+      }
+      .black {
+        background-color: black;
+        color: white;
+      }
+      .yellow {
+        background-color: yellow;
+      }
+      .purple {
+        background-color: purple;
+      }
+      .pink {
+        background-color: pink;
+      }
+    </style>
+    <div class="box">
+      <section class="title">Background Colours</section>
+      <div class="container" id="containers">
+        <div class="color red" onclick="changeColor('red')">Red</div>
+        <div class="color green" onclick="changeColor('green')">Green</div>
+        <div class="color blue" onclick="changeColor('blue')">Blue</div>
+        <div class="color black" onclick="changeColor('black')">Black</div>
+        <div class="color yellow" onclick="changeColor('yellow')">Yellow</div>
+        <div class="color purple" onclick="changeColor('purple')">Purple</div>
+        <div class="color pink" onclick="changeColor('pink')">Pink</div>
+        <div class="color" onclick="customize()">Customize</div>
+      </div>
+      <script>
+        function changeColor(color) {
+          console.log(color);
+          const body = document.body;
+          body.style.background = color;
+        }
+        function customize() {
+          console.log("function gets called");
+          const container = document.getElementById("containers");
+          const input = document.createElement("input");
+          const button = document.createElement("button");
+
+          input.type = "text";
+          button.innerText = "submit";
+          const div = document.createElement("div");
+
+          div.appendChild(input);
+          div.appendChild(button);
+          container.appendChild(div);
+          const value = input.value;
+          input.setAttribute("id", "input");
+          button.setAttribute(
+            "onclick",
+            "changeColor(document.getElementById('input').value)"
+          );
+        }
+      </script>
+    </div>
+  </body>
+</html>
