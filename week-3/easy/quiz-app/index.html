@@ -5,5 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
   </head>
-  <body></body>
+  <body>
+    <style>
+      .container {
+        width: 100vw;
+        height: 100vh;
+        max-width: 400px;
+        max-height: 300px;
+        border: 1px solid black;
+        margin: 120px 450px;
+        padding: 50px;
+      }
+      .question {
+        text-align: center;
+        font-size: 25px;
+        font-weight: 800;
+      }
+      .option {
+        margin-bottom: 20px;
+      }
+      .submit-button {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+      }
+    </style>
+    <div class="container">
+      <div class="options"></div>
+      <label class="question" id="question">question</label>
+      <div><input type="radio" class="option" /><label>option 1</label></div>
+      <div><input type="radio" class="option" /><label>option 2</label></div>
+      <div><input type="radio" class="option" /><label>option 3</label></div>
+      <div><input type="radio" class="option" /><label>option 4</label></div>
+
+      <div class="submit-button">
+        <button>Submit</button>
+      </div>
+    </div>
+    <script>
+      const quizData = [
+        {
+          question: "Which language runs in a web browser?",
+          a: "Java",
+          b: "C",
+          c: "Python",
+          d: "JavaScript",
+          correct: "d",
+        },
+        {
+          question: "What does CSS stand for?",
+          a: "Central Style Sheets",
+          b: "Cascading Style Sheets",
+          c: "Cascading Simple Sheets",
+          d: "Cars SUVs Sailboats",
+          correct: "b",
+        },
+        {
+          question: "What does HTML stand for?",
+          a: "Hypertext Markup Language",
+          b: "Hypertext Markdown Language",
+          c: "Hyperloop Machine Language",
+          d: "Helicopters Terminals Motorboats Lamborginis",
+          correct: "a",
+        },
+        {
+          question: "What year was JavaScript launched?",
+          a: "1996",
+          b: "1995",
+          c: "1994",
+          d: "none of the above",
+          correct: "b",
+        },
+        // you can add more quiz here
+      ];
+      const title = document.getElementById("question");
+      title.innerText = quizData[0].question;
+      
+    </script>
+  </body>
 </html>
