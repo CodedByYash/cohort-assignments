@@ -6,6 +6,7 @@ const { UserModel, TodoModel } = require("./db");
 const {middleware} = require("./auth");
 
 const mongoose = require("mongoose");
+const { z } = require("zod");
 mongoose.connect(process.env.DATABASE_URL);
 
 const app = express();
@@ -13,17 +14,28 @@ app.use(express.json());
 
 
 const saltRounds = 5;
-
+ 
 
 app.post("/signup",async function(req,res){
-    const { email, password, name } = req.body;
+    // const { email, password, name } = req.body;
+    const body = z.object({
+        email:z.string().min(3).max(20).email(),
+        name:z.string.min(3).max(20),
+        password:z.string().min(8).max(20)
+    })
+
+    const parsedbody = body.safeParse(req.body);
+
+    if(!parsedbody.success){
+        return res.status(403).json({"message":"please send data in required format",error:parsedbody.error})
+    }
 
     try{
     const salt = bcrypt.genSaltSync(saltRounds);
     const hash = bcrypt.hashSync(password, salt);
 
     await UserModel.create({
-        email,password:hash,name
+        name,email,password:hash,
     })
     res.json({"message":"user created successfully"});
     }
@@ -35,7 +47,18 @@ app.post("/signup",async function(req,res){
 })
 
 app.post("/signin",async function(req,res){
-    const { email, password } = req.body;
+    // const { email, password } = req.body;
+
+    const body = z.object({
+        email:z.string().min(3).max(20).email(),
+        password:z.string().min(8).max(20)
+    })
+
+    const parsedbody = body.safeParse(req.body);
+
+    if(!parsedbody.success){
+        return res.status(403).json({"message":"please send data in required format",error:parsedbody.error})
+    }
 
     try{
     const user = await UserModel.findOne({email});
@@ -57,6 +80,17 @@ app.post("/signin",async function(req,res){
 
 app.post("/todo",middleware,async function(req,res){
     const { title, isDone } = req.body;
+
+    const body = z.object({
+        title:z.string().min(3).max(100),
+        isDone:z.boolean()
+    })
+
+    const parsedbody = body.safeParse(req.body);
+
+    if(!parsedbody.success){
+        return res.status(403).json({"message":"please send data in required format",error:parsedbody.error})
+    }
     const userId = req.userId;
     if (!userId) {
         return res.status(401).json({ "message": "unauthorized" });
