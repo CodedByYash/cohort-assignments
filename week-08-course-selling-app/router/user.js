@@ -64,7 +64,7 @@ userRouter.post("/signin", async (req, res) => {
   const { email, password } = parsedbody;
 
   try {
-    const founduser = await UserModel.findOne({ email });
+    const founduser = await UserModel.findOne({ email, password });
 
     if (!founduser) {
       return res
@@ -73,7 +73,10 @@ userRouter.post("/signin", async (req, res) => {
     }
 
     if (bcrypt.compareSync(password, founduser.password)) {
-      const token = jwt.sign({ email }, process.env.USER_JWT_SECRET);
+      const token = jwt.sign(
+        { id: founduser._id },
+        process.env.USER_JWT_SECRET
+      );
       return res.json({ token: token });
     } else {
       return res.status(403).json({ message: "Invalid password" });
@@ -84,7 +87,7 @@ userRouter.post("/signin", async (req, res) => {
   }
 });
 
-userRouter.get("/purchases", async (req, res) => {
+userRouter.get("/purchases", usermiddleware, async (req, res) => {
   const userId = req.userId;
 
   try {
