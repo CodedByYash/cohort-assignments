@@ -1,15 +1,16 @@
 const { Router } = require("express");
-const { UserModel, CourseModel, AdminModel } = require("../db");
+const { CourseModel, AdminModel } = require("../db");
 const { z } = require("zod");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { adminMiddleware } = require("../middleware/admin");
 
 const adminRouter = Router();
 const saltround = 5;
 
 adminRouter.post("/signup", async (req, res) => {
   const schema = z.object({
-    email: z.string().min(3).max(20).email(),
+    email: z.string().min(3).max(50).email(),
     password: z.string().min(8).max(20),
     firstname: z.string().min(3).max(20),
     lastname: z.string().min(3).max(20),
@@ -17,8 +18,8 @@ adminRouter.post("/signup", async (req, res) => {
   const parsedbody = schema.safeParse(req.body);
 
   if (!parsedbody.success) {
-    return res.json({
-      message: "can not parsed body",
+    return res.status(400).json({
+      message: "Invalid request body",
       error: parsedbody.error,
     });
   }
@@ -28,7 +29,7 @@ adminRouter.post("/signup", async (req, res) => {
     const founduser = await AdminModel.findOne({ email });
 
     if (founduser) {
-      return res.status(403).json({ message: "user already exist" });
+      return res.status(403).json({ message: "User already exist" });
     }
 
     const salt = bcrypt.genSaltSync(saltround);
@@ -41,20 +42,135 @@ adminRouter.post("/signup", async (req, res) => {
       lastname,
     });
 
-    res.json({ message: "signup successful" });
+    res.status(201).json({ message: "Signup successful" });
   } catch (e) {
     console.log(e);
-    return res.status(500).json({ message: "can not able to create account" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
-adminRouter.post("/signin", (req, res) => {});
+adminRouter.post("/signin", async (req, res) => {
+  const schema = z.object({
+    email: z.string().min(3).max(50).email(),
+    password: z.string().min(8).max(20),
+  });
+  const parsedbody = schema.safeParse(req.body);
 
-adminRouter.post("/course", (req, res) => {});
+  if (!parsedbody.success) {
+    return res.status(400).json({
+      message: "Invalid request body",
+      error: parsedbody.error,
+    });
+  }
+  const { email, password } = parsedbody.data;
 
-adminRouter.put("/course", (req, res) => {});
+  try {
+    const founduser = await AdminModel.findOne({ email });
 
-adminRouter.get("/course/bulk", (req, res) => {});
+    if (!founduser || !bcrypt.compareSync(password, founduser.password)) {
+      return res
+        .status(401)
+        .json({ message: "user does not exist, Please check credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: founduser._id, role: "admin" },
+      process.env.ADMIN_JWT_SECRET,
+      { expiresIn: "2d" }
+    );
+    return res.status(200).json({ token });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+adminRouter.post("/course", adminMiddleware, async (req, res) => {
+  const adminId = req.userId;
+  const schema = z.object({
+    title: z.string().min(5).max(100),
+    description: z.string().min(8).max(300),
+    price: z.number().positive(),
+    imageUrl: z.string().min(3).max(200),
+  });
+  const parsedbody = schema.safeParse(req.body);
+
+  if (!parsedbody.success) {
+    return res.status(400).json({
+      message: "Invalid request body",
+      error: parsedbody.error,
+    });
+  }
+  const { title, description, price, imageUrl } = parsedbody.data;
+
+  try {
+    await CourseModel.create({
+      title,
+      description,
+      price,
+      imageUrl,
+      creatorId: adminId,
+    });
+    res.status(201).json({ message: "Course created successfully" });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: "Error occurred while creating course" });
+  }
+});
+
+adminRouter.put("/course", adminMiddleware, async (req, res) => {
+  const adminId = req.userId;
+  const schema = z.object({
+    title: z.string().min(5).max(100),
+    description: z.string().min(8).max(300),
+    price: z.number().positive(),
+    imageUrl: z.string().min(3).max(200),
+    courseId: z.string().min(3).max(50),
+  });
+  const parsedbody = schema.safeParse(req.body);
+
+  if (!parsedbody.success) {
+    return res.status(400).json({
+      message: "can not parsed body",
+      error: parsedbody.error,
+    });
+  }
+  const { title, description, price, imageUrl, courseId } = parsedbody.data;
+
+  try {
+    const updatesCourse = await CourseModel.findByIdAndUpdate(
+      courseId,
+      {
+        title,
+        description,
+        price,
+        imageUrl,
+        creatorId: adminId,
+      },
+      { new: true }
+    );
+    if (!updatedCourse) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+    res.status(200).json({ message: "course created successfully" });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: "Error occurred while updating course" });
+  }
+});
+
+adminRouter.get("/course/bulk", adminMiddleware, async (req, res) => {
+  const adminId = req.userId;
+
+  try {
+    const courses = await CourseModel.find({ creatorId: adminId });
+
+    res.status(200).json({ message: "Courses retrived successfully", courses });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Error retrieving courses" });
+  }
+});
 
 module.exports = {
   adminRouter: adminRouter,
