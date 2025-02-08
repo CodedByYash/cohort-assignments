@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { UserModel, CourseModel } = require("../db");
+const { UserModel, CourseModel, PurchaseModel } = require("../db");
 const { z } = require("zod");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -76,7 +76,18 @@ userRouter.post("/signin", async (req, res) => {
       process.env.USER_JWT_SECRET,
       { expiresIn: "2d" }
     );
-    return res.status(200).json({ token: token });
+    // for token based authentication send token in response
+    // return res.status(200).json({ token: token });
+
+    // for cookie based authentication set cookie in response
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 172800 * 1000,
+    });
+
+    res.status(200).json({ message: "Signin successful" });
   } catch (e) {
     console.log(e);
     return res.status(500).json({ message: "Internal server error" });
@@ -87,7 +98,7 @@ userRouter.get("/purchases", userMiddleware, async (req, res) => {
   const userId = req.userId;
 
   try {
-    const purchases = await CourseModel.find({ userId });
+    const purchases = await PurchaseModel.find({ userId });
 
     if (!purchases.length == 0) {
       return res.status(200).json({ message: "No course is purchased" });

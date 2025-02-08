@@ -78,7 +78,18 @@ adminRouter.post("/signin", async (req, res) => {
       process.env.ADMIN_JWT_SECRET,
       { expiresIn: "2d" }
     );
-    return res.status(200).json({ token });
+    // for token based authentication send token in response
+    // return res.status(200).json({ token });
+
+    // for cookie based authentication set cookie in response
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 172800 * 1000,
+    });
+
+    res.status(200).json({ message: "Signin successful" });
   } catch (e) {
     console.log(e);
     return res.status(500).json({ message: "Internal server error" });
@@ -91,7 +102,7 @@ adminRouter.post("/course", adminMiddleware, async (req, res) => {
     title: z.string().min(5).max(100),
     description: z.string().min(8).max(300),
     price: z.number().positive(),
-    imageUrl: z.string().min(3).max(200),
+    imageUrl: z.string().min(3).max(300),
   });
   const parsedbody = schema.safeParse(req.body);
 
@@ -124,7 +135,7 @@ adminRouter.put("/course", adminMiddleware, async (req, res) => {
     title: z.string().min(5).max(100),
     description: z.string().min(8).max(300),
     price: z.number().positive(),
-    imageUrl: z.string().min(3).max(200),
+    imageUrl: z.string().min(3).max(300),
     courseId: z.string().min(3).max(50),
   });
   const parsedbody = schema.safeParse(req.body);
@@ -138,7 +149,7 @@ adminRouter.put("/course", adminMiddleware, async (req, res) => {
   const { title, description, price, imageUrl, courseId } = parsedbody.data;
 
   try {
-    const updatesCourse = await CourseModel.findByIdAndUpdate(
+    const updatedCourse = await CourseModel.findByIdAndUpdate(
       courseId,
       {
         title,
@@ -152,7 +163,7 @@ adminRouter.put("/course", adminMiddleware, async (req, res) => {
     if (!updatedCourse) {
       return res.status(404).json({ message: "Course not found" });
     }
-    res.status(200).json({ message: "course created successfully" });
+    res.status(200).json({ message: "course updated successfully" });
   } catch (e) {
     console.log(e);
     res.status(500).json({ message: "Error occurred while updating course" });
